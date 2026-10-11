@@ -37,15 +37,46 @@ public static class Tweaks
             Id = "ai-copilot",
             Title = "Disable Windows Copilot",
             Category = Ai,
-            Description = "Turns off the Copilot assistant and hides its taskbar button.",
+            Description = "Turns off the Copilot assistant and removes the Copilot app.",
             Details = "Sets the 'Turn off Windows Copilot' policy (Group Policy: User/Computer " +
-                      "Configuration → Administrative Templates → Windows Components → Windows Copilot) " +
-                      "and removes the taskbar button. Copilot sends prompts and context to Microsoft.",
+                      "Configuration → Administrative Templates → Windows Components → Windows Copilot; " +
+                      "honored on Pro/Enterprise/Education) and hides the legacy taskbar button. Also removes " +
+                      "the Copilot app package for all users and its provisioned package so it cannot be " +
+                      "reinstalled — the reliable disable on Windows 11 Home where the policy is ignored. " +
+                      "Copilot sends prompts and context to Microsoft. Rollback re-registers the package " +
+                      "if its files are still staged.",
             Actions = new TweakAction[]
             {
                 HKLM(@"SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", 1),
                 HKCU(@"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", 1),
                 HKCU(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowCopilotButton", 0),
+                new PowerShellAction
+                {
+                    Description = "Remove the Copilot app package (all users) and its provisioned package",
+                    DetectScript =
+                        "$pkg = Get-AppxPackage -AllUsers -Name '*copilot*' " +
+                        "-ErrorAction SilentlyContinue; " +
+                        "$prov = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue " +
+                        "| Where-Object { $_.DisplayName -like '*copilot*' }; " +
+                        "if ($pkg -or $prov) { 'false' } else { 'true' }",
+                    ApplyScript =
+                        "$pkg = Get-AppxPackage -AllUsers -Name '*copilot*' " +
+                        "-ErrorAction SilentlyContinue; " +
+                        "\"prior_families=\" + (($pkg | ForEach-Object { $_.PackageFamilyName }) -join ';'); " +
+                        "$pkg | ForEach-Object { Remove-AppxPackage -Package $_.PackageFullName " +
+                        "-AllUsers -ErrorAction SilentlyContinue }; " +
+                        "Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue " +
+                        "| Where-Object { $_.DisplayName -like '*copilot*' } " +
+                        "| Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null; " +
+                        "$left = Get-AppxPackage -AllUsers -Name '*copilot*' " +
+                        "-ErrorAction SilentlyContinue; " +
+                        "if ($left) { throw \"Copilot package still present: \" + " +
+                        "(($left | ForEach-Object { $_.Name }) -join ', ') }; 'ok'",
+                    RevertScriptTemplate =
+                        "'{prior_families}' -split ';' | Where-Object { $_ } | ForEach-Object { " +
+                        "Add-AppxPackage -RegisterByFamilyName -MainPackageFamilyName $_ " +
+                        "-ErrorAction SilentlyContinue | Out-Null }",
+                },
             },
         },
         new Tweak

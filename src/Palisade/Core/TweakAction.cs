@@ -331,9 +331,13 @@ public sealed class OptionalFeatureAction : TweakAction
         };
         if (state == TweakState.NotApplicable) return undo;
 
-        var r = DesiredEnabled
-            ? PowerShellRunner.Run($"Enable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart -ErrorAction Stop | Out-Null; 'ok'")
-            : PowerShellRunner.Run($"Disable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart -ErrorAction Stop | Out-Null; 'ok'");
+        // DISM component-store changes can exceed a minute on a cold store (e.g.
+        // Recall on Copilot+ PCs) — allow five minutes and retry once on timeout.
+        var script = (DesiredEnabled ? "Enable" : "Disable") +
+            $"-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart -ErrorAction Stop | Out-Null; 'ok'";
+        var r = PowerShellRunner.Run(script, timeoutMs: 300000);
+        if (!r.Success && r.StdErr.Trim() == "Timed out")
+            r = PowerShellRunner.Run(script, timeoutMs: 300000);
         if (!r.Success)
             throw new InvalidOperationException($"DISM feature change failed for {FeatureName}: {r.StdErr.Trim()}");
         return undo;
@@ -343,9 +347,9 @@ public sealed class OptionalFeatureAction : TweakAction
     {
         var prior = undo.Data["prior"];
         if (prior == "enabled")
-            PowerShellRunner.Run($"Enable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart | Out-Null");
+            PowerShellRunner.Run($"Enable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart | Out-Null", timeoutMs: 300000);
         else if (prior == "disabled")
-            PowerShellRunner.Run($"Disable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart | Out-Null");
+            PowerShellRunner.Run($"Disable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart | Out-Null", timeoutMs: 300000);
     }
 }
 

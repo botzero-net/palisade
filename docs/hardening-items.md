@@ -7,7 +7,7 @@ items are off by default because they can break something someone might use.
 | ID | Item | Rec. | What it changes |
 |----|------|------|-----------------|
 | **AI features & training data** |
-| `ai-copilot` | Disable Windows Copilot | ✓ | `TurnOffWindowsCopilot=1` policy (HKLM+HKCU), `ShowCopilotButton=0` |
+| `ai-copilot` | Disable Windows Copilot | ✓ | `TurnOffWindowsCopilot=1` policy (HKLM+HKCU; honored on Pro/Ent/Edu), `ShowCopilotButton=0`; removes Copilot Appx package (all users) + provisioned package so it works on Home too (rollback re-registers staged packages) |
 | `ai-recall` | Disable Recall / AI snapshot analysis | ✓ | `DisableAIDataAnalysis=1` (WindowsAI policy, HKLM+HKCU); disables `Recall` optional feature if present |
 | `ai-ink-typing` | Stop inking & typing personalization | ✓ | `RestrictImplicitInkCollection/TextCollection=1`, `HarvestContacts=0`, `AcceptedPrivacyPolicy=0` |
 | `ai-tailored` | Disable tailored experiences | ✓ | `TailoredExperiencesWithDiagnosticDataEnabled=0` |

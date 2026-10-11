@@ -8,30 +8,42 @@
 
         <Border Style="{StaticResource Card}" Margin="0,26,0,0">
             <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <TextBlock Text="🔒" FontSize="20" VerticalAlignment="Center" />
-                    <StackPanel Margin="12,0,0,0">
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
                         <TextBlock Text="Private by design" FontWeight="SemiBold" FontSize="14" />
                         <TextBlock Text="Palisade never phones home — no accounts, no telemetry, no installers. It only sets documented Windows policies, registry values and services."
                                    Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" FontSize="12.5" />
                     </StackPanel>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                </Grid>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <TextBlock Text="📋" FontSize="20" VerticalAlignment="Center" />
-                    <StackPanel Margin="12,0,0,0">
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
                         <TextBlock Text="Explainable" FontWeight="SemiBold" FontSize="14" />
                         <TextBlock Text="Each protection lists the exact setting it changes — the same knobs an administrator would set by hand."
                                    Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" FontSize="12.5" />
                     </StackPanel>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <TextBlock Text="↩" FontSize="20" VerticalAlignment="Center" />
-                    <StackPanel Margin="12,0,0,0">
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
                         <TextBlock Text="Reversible" FontWeight="SemiBold" FontSize="14" />
                         <TextBlock Text="Every run is journaled with the previous values, so you can roll back a change — or a whole session — anytime."
                                    Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" FontSize="12.5" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </StackPanel>
         </Border>
 
