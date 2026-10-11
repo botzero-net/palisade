@@ -1,0 +1,90 @@
+<UserControl x:Class="Palisade.Pages.CheckupPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="System checkup" />
+        <TextBlock Style="{StaticResource PageSubtitle}"
+                   Text="A read-only look at how this device is protected right now. Nothing is changed yet." />
+
+        <StackPanel x:Name="LoadingPanel" Margin="0,30" HorizontalAlignment="Center">
+            <ProgressBar IsIndeterminate="True" Width="280" />
+            <TextBlock Text="Inspecting system…" Foreground="{StaticResource SubtleTextBrush}"
+                       HorizontalAlignment="Center" Margin="0,10,0,0" FontSize="12" />
+        </StackPanel>
+
+        <ScrollViewer x:Name="ResultsPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,22,0,4">
+
+                <Border x:Name="NoAvBanner" Style="{StaticResource Card}" Margin="0,0,0,12"
+                        Background="{StaticResource BadSoftBrush}" BorderBrush="#F0C4BF">
+                    <TextBlock Foreground="{StaticResource BadBrush}" FontSize="12.5" TextWrapping="Wrap"
+                               Text="⚠ No antivirus with real-time protection was found. Install one — or let Palisade re-enable Microsoft Defender on the next screen." />
+                </Border>
+                <Border x:Name="TamperBanner" Style="{StaticResource Card}" Margin="0,0,0,12"
+                        Background="{StaticResource WarnSoftBrush}" BorderBrush="#F0D9B5">
+                    <TextBlock Foreground="{StaticResource WarnBrush}" FontSize="12.5" TextWrapping="Wrap"
+                               Text="⚠ Defender Tamper Protection is off. Windows only lets a human turn it on: open Windows Security → Virus &amp; threat protection → Manage settings." />
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="System" FontWeight="SemiBold" FontSize="13.5" />
+                            <TextBlock x:Name="OsText" Margin="0,8,0,0" FontSize="12.5" Foreground="{StaticResource SubtleTextBrush}" />
+                            <TextBlock x:Name="ElevatedText" Margin="0,4,0,0" FontSize="12.5" Foreground="{StaticResource SubtleTextBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Disk encryption (C:)" FontWeight="SemiBold" FontSize="13.5" />
+                            <TextBlock x:Name="BitLockerText" Margin="0,8,0,0" FontSize="12.5"
+                                       Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Antivirus products registered" FontWeight="SemiBold" FontSize="13.5" />
+                        <ItemsControl x:Name="AvList" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                                        <TextBlock Text="•" Foreground="{StaticResource AccentBrush}" />
+                                        <TextBlock Text="{Binding Name}" Margin="8,0,0,0" FontSize="12.5" />
+                                        <TextBlock Text="{Binding StateSummary}" Margin="8,0,0,0" FontSize="12"
+                                                   Foreground="{StaticResource SubtleTextBrush}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="DefenderCard" Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Real-time protection" FontSize="12" Foreground="{StaticResource SubtleTextBrush}" />
+                            <TextBlock x:Name="RtpText" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Tamper protection" FontSize="12" Foreground="{StaticResource SubtleTextBrush}" />
+                            <TextBlock x:Name="TamperText" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Signatures" FontSize="12" Foreground="{StaticResource SubtleTextBrush}" />
+                            <TextBlock x:Name="SigText" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </StackPanel>
+</UserControl>

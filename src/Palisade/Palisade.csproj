@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Palisade</AssemblyName>
+    <RootNamespace>Palisade</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\palisade.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <AssemblyTitle>Palisade</AssemblyTitle>
+    <Description>Palisade — a user-first Windows 11 privacy and security hardening wizard.</Description>
+    <Company>Palisade open source project</Company>
+    <Product>Palisade</Product>
+    <Copyright>MIT License</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\palisade.ico" />
+    <Resource Include="Assets\palisade.ico" />
+  </ItemGroup>
+
+</Project>

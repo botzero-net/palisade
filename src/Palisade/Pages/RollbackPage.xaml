@@ -1,0 +1,48 @@
+<UserControl x:Class="Palisade.Pages.RollbackPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <Button Style="{StaticResource LinkButton}" Content="← Back" Click="Back_Click" Padding="0" />
+        </StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Roll back changes" Margin="0,4,0,0" />
+        <TextBlock Style="{StaticResource PageSubtitle}"
+                   Text="Every Palisade session is journaled with the values it replaced. Rolling back restores them, newest change first." />
+
+        <TextBlock x:Name="EmptyText" Text="Nothing to roll back — no un-reverted changes are recorded on this machine."
+                   Foreground="{StaticResource SubtleTextBrush}" FontSize="12.5" Margin="0,22,0,0" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="360" Margin="0,16,0,0">
+            <ItemsControl x:Name="Sessions">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13.5" />
+                                    <TextBlock Text="{Binding Subtitle}" FontSize="12" Margin="0,3,0,0"
+                                               Foreground="{StaticResource SubtleTextBrush}" />
+                                    <TextBlock Text="{Binding Detail}" FontSize="11.5" Margin="0,3,0,0"
+                                               Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Roll back" VerticalAlignment="Center"
+                                        Click="RollbackSession_Click" Tag="{Binding SessionId}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <Button x:Name="RollbackAllButton" Content="Roll back everything" Click="RollbackAll_Click" />
+            <Button Content="Open log folder" Click="OpenLog_Click" Margin="8,0,0,0" />
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" Margin="14,0,0,0"
+                       Foreground="{StaticResource SubtleTextBrush}" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>
