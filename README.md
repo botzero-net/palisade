@@ -8,7 +8,7 @@ then applies your choices with documented system settings. Every change is
 explained before it happens, journaled with its previous value, and reversible
 with one click.
 
-Free, open source (MIT), no telemetry, no upsell, no "pro" tier.
+Free, open source (GPL-3.0), no telemetry, no upsell, no "pro" tier.
 
 ---
 
@@ -105,5 +105,5 @@ reversible. See the `Tweak` model in `src/Palisade/Core/`.
 ## Disclaimer
 
 Palisade changes documented Windows settings on your own machine at your
-request. It's shipped as-is (MIT); review the items, keep the journal, and roll
+request. It's shipped as-is (GPL-3.0); review the items, keep the journal, and roll
 back anything that misbehaves.

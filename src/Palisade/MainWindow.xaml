@@ -96,7 +96,7 @@
 
                 <StackPanel Grid.Row="2">
                     <TextBlock x:Name="VersionText" FontSize="11" Foreground="{StaticResource SubtleTextBrush}" />
-                    <TextBlock Text="Open source · MIT" FontSize="11" Foreground="{StaticResource SubtleTextBrush}" Margin="0,2,0,0" />
+                    <TextBlock Text="Open source · GPL-3.0" FontSize="11" Foreground="{StaticResource SubtleTextBrush}" Margin="0,2,0,0" />
                 </StackPanel>
             </Grid>
         </Border>

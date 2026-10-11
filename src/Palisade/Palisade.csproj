@@ -17,7 +17,7 @@
     <Description>Palisade — a user-first Windows 11 privacy and security hardening wizard.</Description>
     <Company>Palisade open source project</Company>
     <Product>Palisade</Product>
-    <Copyright>MIT License</Copyright>
+    <Copyright>GPL-3.0 License</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
