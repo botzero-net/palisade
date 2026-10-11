@@ -46,7 +46,10 @@ public partial class CheckupPage : UserControl, IWizardPage
                 ? $"BitLocker on · {bl.VolumeStatus} ✓"
                 : $"Off · {bl.VolumeStatus}. Consider enabling device encryption in Settings.";
 
-        AvList.ItemsSource = s.AntivirusProducts;
+        AvList.ItemsSource = s.AntivirusProducts.Count > 0
+            ? s.AntivirusProducts
+            : new List<AntivirusProductInfo>
+              { new() { Name = "None found", StateSummary = "no antivirus is registered with Windows" } };
 
         var d = s.Defender;
         if (!d.Queried)

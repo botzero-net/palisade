@@ -16,6 +16,8 @@ public sealed class WizardContext
     public Action<int>? GoToStep { get; set; }
     /// <summary>Open the rollback page (set by MainWindow).</summary>
     public Action? ShowRollback { get; set; }
+    /// <summary>Step to return to when leaving the rollback page (set by MainWindow).</summary>
+    public int ReturnStep { get; set; }
 
     public WizardContext() => Engine = new Engine(Journal);
 }

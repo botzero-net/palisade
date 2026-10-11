@@ -116,6 +116,10 @@ public partial class ChoicesPage : UserControl, IWizardPage
             o.State = engine.DetectTweak(o.Tweak);
         })));
 
+        // Items that don't apply to this device can't be changed — uncheck them.
+        foreach (var o in _options.Where(o => o.State == TweakState.NotApplicable))
+            o.IsSelected = false;
+
         DetectingText.Text = "";
         UpdateCount();
     }

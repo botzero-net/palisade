@@ -321,9 +321,12 @@ public static class Tweaks
                 {
                     Description = "Enable Defender real-time, network-intrusion and download scanning",
                     DetectScript =
-                        "$s = Get-MpComputerStatus; " +
-                        "if ($null -eq $s -or -not $s.AntivirusEnabled) { 'na' } " +
-                        "elseif ($s.RealTimeProtectionEnabled) { 'true' } else { 'false' }",
+                        "$av = Get-CimInstance -Namespace 'root/SecurityCenter2' " +
+                        "-ClassName AntiVirusProduct -ErrorAction SilentlyContinue; " +
+                        "if ($av | Where-Object { $_.displayName -notmatch 'Defender' }) { 'na' } " +
+                        "else { $s = Get-MpComputerStatus; " +
+                        "if ($null -eq $s) { 'na' } " +
+                        "elseif ($s.RealTimeProtectionEnabled) { 'true' } else { 'false' } }",
                     ApplyScript =
                         "$p = Get-MpPreference; " +
                         "\"prior_DisableRealtimeMonitoring=$($p.DisableRealtimeMonitoring)\"; " +
@@ -353,7 +356,10 @@ public static class Tweaks
                 {
                     Description = "Enable PUA block, basic cloud MAPS, block-at-first-sight, prompt for samples",
                     DetectScript =
-                        "$s = Get-MpComputerStatus; if ($null -eq $s -or -not $s.AntivirusEnabled) { 'na'; exit }; " +
+                        "$av = Get-CimInstance -Namespace 'root/SecurityCenter2' " +
+                        "-ClassName AntiVirusProduct -ErrorAction SilentlyContinue; " +
+                        "if ($av | Where-Object { $_.displayName -notmatch 'Defender' }) { 'na'; exit }; " +
+                        "$s = Get-MpComputerStatus; if ($null -eq $s) { 'na'; exit }; " +
                         "$p = Get-MpPreference; " +
                         "if ($p.PUAProtection -eq 1 -and $p.MAPSReporting -ge 1 -and " +
                         "-not $p.DisableBlockAtFirstSeen) { 'true' } else { 'false' }",

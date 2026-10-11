@@ -152,8 +152,14 @@ public sealed class Engine
     /// <summary>Roll back all active entries of one apply session, newest first.</summary>
     public async Task<(int reverted, int failed, List<string> errors)> RollbackSessionAsync(string sessionId)
     {
+        var logPath = Path.Combine(Journal.DataDir, $"palisade-rollback-{DateTime.Now:yyyyMMdd-HHmmss}.log");
         return await Task.Run(() =>
         {
+            Directory.CreateDirectory(Journal.DataDir);
+            using var log = new StreamWriter(logPath, append: true) { AutoFlush = true };
+            void L(string line) => log.WriteLine($"{DateTime.Now:HH:mm:ss} {line}");
+
+            L($"Palisade {AppVersion.Text} — rollback of session {sessionId} started {DateTime.Now:u}");
             var entries = _journal.ActiveEntriesFor(sessionId);
             var reverted = 0;
             var failed = 0;
@@ -169,13 +175,16 @@ public sealed class Engine
                     action.Revert(ActionUndo.FromJson(e.UndoJson));
                     _journal.MarkReverted(e);
                     reverted++;
+                    L($"  reverted [{e.TweakId}] {e.Description}");
                 }
                 catch (Exception ex)
                 {
                     failed++;
                     errors.Add($"{e.TweakTitle}: {ex.Message}");
+                    L($"  FAILED [{e.TweakId}] {e.Description}: {ex.Message}");
                 }
             }
+            L($"Rollback of {sessionId} finished: {reverted} reverted, {failed} failed.");
             return (reverted, failed, errors);
         });
     }

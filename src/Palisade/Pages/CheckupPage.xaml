@@ -18,7 +18,7 @@
                 <Border x:Name="NoAvBanner" Style="{StaticResource Card}" Margin="0,0,0,12"
                         Background="{StaticResource BadSoftBrush}" BorderBrush="#F0C4BF">
                     <TextBlock Foreground="{StaticResource BadBrush}" FontSize="12.5" TextWrapping="Wrap"
-                               Text="⚠ No antivirus with real-time protection was found. Install one — or let Palisade re-enable Microsoft Defender on the next screen." />
+                               Text="⚠ No antivirus with real-time protection was found. Install one — or, if Microsoft Defender is on this machine but switched off, enable the Defender protections on the next screen (they are skipped automatically when a third-party AV is registered)." />
                 </Border>
                 <Border x:Name="TamperBanner" Style="{StaticResource Card}" Margin="0,0,0,12"
                         Background="{StaticResource WarnSoftBrush}" BorderBrush="#F0D9B5">
@@ -37,7 +37,7 @@
                             <TextBlock x:Name="OsText" Margin="0,8,0,0" FontSize="12.5" Foreground="{StaticResource SubtleTextBrush}" />
                             <TextBlock x:Name="ElevatedText" Margin="0,4,0,0" FontSize="12.5" Foreground="{StaticResource SubtleTextBrush}" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1">
+                        <StackPanel Grid.Column="1" Margin="24,0,0,0">
                             <TextBlock Text="Disk encryption (C:)" FontWeight="SemiBold" FontSize="13.5" />
                             <TextBlock x:Name="BitLockerText" Margin="0,8,0,0" FontSize="12.5"
                                        Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" />

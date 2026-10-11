@@ -54,6 +54,7 @@ public partial class MainWindow : Window
 
     private void ShowRollback()
     {
+        _ctx.ReturnStep = _index;
         _specialPage ??= new RollbackPage(_ctx);
         PageHost.Content = _specialPage.View;
         foreach (var s in _railItems) s.IsCurrent = false;

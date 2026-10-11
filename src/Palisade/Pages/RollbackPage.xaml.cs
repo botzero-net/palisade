@@ -95,5 +95,5 @@ public partial class RollbackPage : UserControl, IWizardPage
         try { Process.Start("explorer.exe", Journal.DataDir); } catch { }
     }
 
-    private void Back_Click(object sender, RoutedEventArgs e) => _ctx.GoToStep?.Invoke(0);
+    private void Back_Click(object sender, RoutedEventArgs e) => _ctx.GoToStep?.Invoke(_ctx.ReturnStep);
 }
