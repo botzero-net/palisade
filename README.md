@@ -72,7 +72,8 @@ Requires Windows + the .NET 8 SDK:
 ```powershell
 dotnet publish src/Palisade/Palisade.csproj -c Release -r win-x64 `
     --self-contained -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:EnableCompressionInSingleFile=true -o publish
 ```
 
 CI builds the same way on `windows-latest` and runs

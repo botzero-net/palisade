@@ -4,26 +4,26 @@ namespace Palisade.Core;
 
 public sealed class AntivirusProductInfo
 {
-    public string Name { get; init; } = "";
-    public string StateSummary { get; init; } = "";
+    public string Name { get; set; } = "";
+    public string StateSummary { get; set; } = "";
 }
 
 public sealed class DefenderStatus
 {
-    public bool Queried { get; init; }
-    public bool AntivirusEnabled { get; init; }
-    public bool RealTimeProtection { get; init; }
-    public bool TamperProtection { get; init; }
-    public bool SignaturesUpToDate { get; init; }
-    public string SignatureVersion { get; init; } = "";
-    public string RunningMode { get; init; } = "";
+    public bool Queried { get; set; }
+    public bool AntivirusEnabled { get; set; }
+    public bool RealTimeProtection { get; set; }
+    public bool TamperProtection { get; set; }
+    public bool SignaturesUpToDate { get; set; }
+    public string SignatureVersion { get; set; } = "";
+    public string RunningMode { get; set; } = "";
 }
 
 public sealed class BitLockerStatus
 {
-    public bool Queried { get; init; }
-    public string Protection { get; init; } = "";
-    public string VolumeStatus { get; init; } = "";
+    public bool Queried { get; set; }
+    public string Protection { get; set; } = "";
+    public string VolumeStatus { get; set; } = "";
 }
 
 public sealed class SystemSnapshot
