@@ -55,4 +55,23 @@ public static class PowerShellRunner
             return new PowerShellResult { Success = false, ExitCode = -1, StdErr = ex.Message };
         }
     }
+
+    /// <summary>Best-effort plain-language explanation for why a run failed.</summary>
+    public static string Reason(PowerShellResult r)
+    {
+        var s = (r.StdErr ?? "").Trim();
+        if (s.Length == 0) return $"exit code {r.ExitCode}";
+        if (s == "Timed out") return "timed out before completing";
+        if (s.Contains("Access is denied", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("Access Denied", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("UnauthorizedAccess", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("0x80070005", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("0x80041003", StringComparison.OrdinalIgnoreCase))
+            return "access denied — needs administrator rights, or the setting is protected by Tamper Protection";
+        if (s.Contains("not recognized", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("Cannot find", StringComparison.OrdinalIgnoreCase) ||
+            s.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+            return "command or feature not available on this system";
+        return s;
+    }
 }

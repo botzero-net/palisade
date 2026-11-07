@@ -32,7 +32,7 @@ Actions, so you can verify exactly what went into it.
 1. **Welcome** — what Palisade changes and how rollback works.
 2. **Checkup** — read-only snapshot: antivirus products registered, Defender
    real-time/tamper/signature status, disk encryption, elevation.
-3. **Protections** — a grouped checklist of ~24 hardening items across AI
+3. **Protections** — a grouped checklist of 30 hardening items across AI
    features, telemetry, ads/tracking, search, antivirus and system/network
    hardening. Every item expands to show *exactly* what it changes.
 4. **Apply** — per-item progress with a live journal.

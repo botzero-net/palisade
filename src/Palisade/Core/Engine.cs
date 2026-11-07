@@ -68,7 +68,7 @@ public sealed class Engine
         var outcome = new ApplyOutcome { SessionId = sessionId };
         var logPath = Path.Combine(Journal.DataDir, $"palisade-{DateTime.Now:yyyyMMdd-HHmmss}.log");
         outcome.LogPath = logPath;
-        Directory.CreateDirectory(Journal.DataDir);
+        Journal.EnsureSecureDataDir();
 
         await Task.Run(() =>
         {
@@ -155,7 +155,7 @@ public sealed class Engine
         var logPath = Path.Combine(Journal.DataDir, $"palisade-rollback-{DateTime.Now:yyyyMMdd-HHmmss}.log");
         return await Task.Run(() =>
         {
-            Directory.CreateDirectory(Journal.DataDir);
+            Journal.EnsureSecureDataDir();
             using var log = new StreamWriter(logPath, append: true) { AutoFlush = true };
             void L(string line) => log.WriteLine($"{DateTime.Now:HH:mm:ss} {line}");
 

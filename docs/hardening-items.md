@@ -29,7 +29,7 @@ items are off by default because they can break something someone might use.
 | `web-cortana` | Disable Cortana | ✓ | `AllowCortana=0` |
 | **Antivirus & malware protection** |
 | `av-defender-rtp` | Ensure Defender real-time protection | ✓ | `Set-MpPreference`: RTP, intrusion prevention, download scanning on — skipped when a third-party AV is registered |
-| `av-defender-cloud` | PUA block, cloud lookups, block-at-first-sight | ✓ | `PUAProtection=1`, `MAPSReporting=1` (basic), `SubmitSamplesConsent=0` (always ask), `DisableBlockAtFirstSeen=false` |
+| `av-defender-cloud` | PUA block, cloud lookups, block-at-first-sight | ✓ | `PUAProtection=1`, `MAPSReporting≥1` (raise-only — never lowers a stronger setting), `SubmitSamplesConsent=0` (always ask), `DisableBlockAtFirstSeen=false` |
 | `av-smartscreen` | Ensure SmartScreen is on | ✓ | `EnableSmartScreen=1`, `ShellSmartScreenLevel="Warn"`, `SmartScreenEnabled="Warn"` |
 | **System & network hardening** |
 | `sys-smb1` | Disable SMBv1 | ✓ (reboot) | `SMB1Protocol` feature off + `LanmanServer\Parameters\SMB1=0` |
