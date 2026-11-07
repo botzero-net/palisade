@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
 namespace Palisade.Core;
@@ -108,6 +109,11 @@ public sealed class RegistryTweakAction : TweakAction
         undo.Data["path"] = Path;
         undo.Data["name"] = Name;
 
+        var view = Environment.Is64BitOperatingSystem ? RegistryView.Registry64 : RegistryView.Default;
+        using (var baseKey = RegistryKey.OpenBaseKey(Hive, view))
+        using (var existing = baseKey.OpenSubKey(Path, writable: false))
+            undo.Data["keyExisted"] = existing != null ? "true" : "false";
+
         using var key = Open(writable: true);
         var prior = key.GetValue(Name, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
         if (prior == null)
@@ -132,26 +138,36 @@ public sealed class RegistryTweakAction : TweakAction
         var hive = Enum.Parse<RegistryHive>(undo.Data["hive"]!);
         var view = Environment.Is64BitOperatingSystem ? RegistryView.Registry64 : RegistryView.Default;
         using var baseKey = RegistryKey.OpenBaseKey(hive, view);
-        using var key = baseKey.OpenSubKey(path, writable: true);
-        if (key == null) return;
 
-        if (undo.Data["existed"] != "true")
+        var keyWasPresent = !undo.Data.TryGetValue("keyExisted", out var ke) || ke == "true";
+        var deleteEmptyKey = false;
+        using (var key = baseKey.OpenSubKey(path, writable: true))
         {
-            key.DeleteValue(name, throwOnMissingValue: false);
-        }
-        else
-        {
-            var priorKind = Enum.Parse<RegistryValueKind>(undo.Data["priorKind"]!);
-            var priorText = undo.Data["priorValue"] ?? "";
-            object value = priorKind switch
+            if (key == null) return;
+
+            if (undo.Data["existed"] != "true")
             {
-                RegistryValueKind.DWord => int.Parse(priorText),
-                RegistryValueKind.QWord => long.Parse(priorText),
-                RegistryValueKind.MultiString => priorText.Split('\n'),
-                _ => priorText,
-            };
-            key.SetValue(name, value, priorKind);
+                key.DeleteValue(name, throwOnMissingValue: false);
+                deleteEmptyKey = !keyWasPresent && key.ValueCount == 0 && key.SubKeyCount == 0;
+            }
+            else
+            {
+                var priorKind = Enum.Parse<RegistryValueKind>(undo.Data["priorKind"]!);
+                var priorText = undo.Data["priorValue"] ?? "";
+                object value = priorKind switch
+                {
+                    RegistryValueKind.DWord => int.Parse(priorText),
+                    RegistryValueKind.QWord => long.Parse(priorText),
+                    RegistryValueKind.MultiString => priorText.Split('\n'),
+                    _ => priorText,
+                };
+                key.SetValue(name, value, priorKind);
+            }
         }
+
+        // Remove the key itself when Palisade created it and nothing remains in it.
+        if (deleteEmptyKey)
+            baseKey.DeleteSubKey(path, throwOnMissingSubKey: false);
     }
 }
 
@@ -204,7 +220,14 @@ public sealed class ServiceStartupAction : TweakAction
         undo.Data["stopNow"] = StopNow ? "true" : "false";
 
         if (StopNow && DesiredStart == 4)
+        {
+            // Record whether the service was running before we stop it.
+            var st = PowerShellRunner.Run(
+                $"(Get-Service -Name '{ServiceName}' -ErrorAction SilentlyContinue).Status");
+            undo.Data["priorStatus"] =
+                st.Success && st.StdOut.Trim() is { Length: > 0 } s ? s : "unknown";
             Run("sc.exe", $"stop \"{ServiceName}\"", ignoreErrors: true);
+        }
 
         return undo;
     }
@@ -220,9 +243,26 @@ public sealed class ServiceStartupAction : TweakAction
         };
         reg.Revert(new ActionUndo { Kind = "registry", Data = undo.Data });
 
-        // If the service was auto/manual before, try to start it again.
-        if (undo.Data["existed"] == "true" && undo.Data["priorValue"] is "2" or "3")
-            Run("sc.exe", $"start \"{undo.Data["service"]}\"", ignoreErrors: true);
+        // Restore the service's running state too — not just its start type.
+        var service = undo.Data["service"]!;
+        var priorStatus = undo.Data.TryGetValue("priorStatus", out var ps) ? ps : "unknown";
+        var wasAutoOrManual = undo.Data["existed"] == "true" && undo.Data["priorValue"] is "2" or "3";
+        if (priorStatus == "Stopped")
+        {
+            // It wasn't running before — don't leave it started.
+            PowerShellRunner.Run(
+                $"Stop-Service -Name '{service}' -Force -ErrorAction SilentlyContinue",
+                timeoutMs: 30000);
+        }
+        else if (wasAutoOrManual)
+        {
+            var r = PowerShellRunner.Run(
+                $"Start-Service -Name '{service}' -ErrorAction Stop | Out-Null; 'ok'",
+                timeoutMs: 30000);
+            if (!r.Success)
+                throw new InvalidOperationException(
+                    $"could not restart service {service}: {PowerShellRunner.Reason(r)}");
+        }
     }
 
     private static void Run(string exe, string args, bool ignoreErrors)
@@ -272,7 +312,7 @@ public sealed class PowerShellAction : TweakAction
     {
         var r = PowerShellRunner.Run(ApplyScript);
         if (!r.Success)
-            throw new InvalidOperationException($"PowerShell action failed: {r.StdErr.Trim()}");
+            throw new InvalidOperationException($"PowerShell action failed: {PowerShellRunner.Reason(r)}");
 
         var undo = new ActionUndo { Kind = Kind };
         foreach (var line in r.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -284,12 +324,29 @@ public sealed class PowerShellAction : TweakAction
         return undo;
     }
 
+    // Journal values are plain text — only allow characters that can't break
+    // out of a substitution and execute something else (no quotes, semicolons,
+    // backticks, pipes, redirection or script blocks).
+    private static readonly Regex SafeKey = new(@"^prior_[A-Za-z0-9_]+$", RegexOptions.Compiled);
+    private static readonly Regex SafeValue =
+        new(@"^$|^[A-Za-z0-9_.:\\][A-Za-z0-9_.,:+/\\ -]{0,511}$", RegexOptions.Compiled);
+
     public override void Revert(ActionUndo undo)
     {
         var script = RevertScriptTemplate;
         foreach (var kv in undo.Data)
+        {
+            if (!SafeKey.IsMatch(kv.Key) ||
+                (kv.Value is { Length: > 0 } v && !SafeValue.IsMatch(v)))
+                throw new InvalidOperationException(
+                    $"journal value '{kv.Key}' failed the integrity check — refusing to run the revert");
             script = script.Replace("{" + kv.Key + "}", kv.Value ?? "");
-        PowerShellRunner.Run(script);
+        }
+
+        var r = PowerShellRunner.Run(script, timeoutMs: 300000);
+        if (!r.Success)
+            throw new InvalidOperationException(
+                $"PowerShell revert failed: {PowerShellRunner.Reason(r)}");
     }
 }
 
@@ -339,17 +396,23 @@ public sealed class OptionalFeatureAction : TweakAction
         if (!r.Success && r.StdErr.Trim() == "Timed out")
             r = PowerShellRunner.Run(script, timeoutMs: 300000);
         if (!r.Success)
-            throw new InvalidOperationException($"DISM feature change failed for {FeatureName}: {r.StdErr.Trim()}");
+            throw new InvalidOperationException($"DISM feature change failed for {FeatureName}: {PowerShellRunner.Reason(r)}");
         return undo;
     }
 
     public override void Revert(ActionUndo undo)
     {
         var prior = undo.Data["prior"];
+        var feature = undo.Data.TryGetValue("feature", out var f) && f != null ? f : FeatureName;
+        PowerShellResult r;
         if (prior == "enabled")
-            PowerShellRunner.Run($"Enable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart | Out-Null", timeoutMs: 300000);
+            r = PowerShellRunner.Run($"Enable-WindowsOptionalFeature -Online -FeatureName '{feature}' -NoRestart | Out-Null", timeoutMs: 300000);
         else if (prior == "disabled")
-            PowerShellRunner.Run($"Disable-WindowsOptionalFeature -Online -FeatureName '{FeatureName}' -NoRestart | Out-Null", timeoutMs: 300000);
+            r = PowerShellRunner.Run($"Disable-WindowsOptionalFeature -Online -FeatureName '{feature}' -NoRestart | Out-Null", timeoutMs: 300000);
+        else
+            return;
+        if (!r.Success)
+            throw new InvalidOperationException($"DISM revert failed for {feature}: {PowerShellRunner.Reason(r)}");
     }
 }
 
@@ -394,6 +457,10 @@ public sealed class CommandAction : TweakAction
     public override void Revert(ActionUndo undo)
     {
         if (undo.Data["appliedPrior"] != "true")
-            RunCmd(RevertCommand);
+        {
+            var code = RunCmd(RevertCommand);
+            if (code != 0)
+                throw new InvalidOperationException($"revert command failed (exit {code}): {RevertCommand}");
+        }
     }
 }

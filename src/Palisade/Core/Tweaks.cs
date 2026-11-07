@@ -62,7 +62,7 @@ public static class Tweaks
                     ApplyScript =
                         "$pkg = Get-AppxPackage -AllUsers -Name '*copilot*' " +
                         "-ErrorAction SilentlyContinue; " +
-                        "\"prior_families=\" + (($pkg | ForEach-Object { $_.PackageFamilyName }) -join ';'); " +
+                        "\"prior_families=\" + (($pkg | ForEach-Object { $_.PackageFamilyName }) -join ','); " +
                         "$pkg | ForEach-Object { Remove-AppxPackage -Package $_.PackageFullName " +
                         "-AllUsers -ErrorAction SilentlyContinue }; " +
                         "Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue " +
@@ -73,7 +73,7 @@ public static class Tweaks
                         "if ($left) { throw \"Copilot package still present: \" + " +
                         "(($left | ForEach-Object { $_.Name }) -join ', ') }; 'ok'",
                     RevertScriptTemplate =
-                        "'{prior_families}' -split ';' | Where-Object { $_ } | ForEach-Object { " +
+                        "'{prior_families}' -split ',' | Where-Object { $_ } | ForEach-Object { " +
                         "Add-AppxPackage -RegisterByFamilyName -MainPackageFamilyName $_ " +
                         "-ErrorAction SilentlyContinue | Out-Null }",
                 },
@@ -366,9 +366,11 @@ public static class Tweaks
                         "Set-MpPreference -DisableRealtimeMonitoring $false " +
                         "-DisableIntrusionPreventionSystem $false -DisableIOAVProtection $false",
                     RevertScriptTemplate =
-                        "Set-MpPreference -DisableRealtimeMonitoring {prior_DisableRealtimeMonitoring} " +
-                        "-DisableIntrusionPreventionSystem {prior_DisableIntrusionPreventionSystem} " +
-                        "-DisableIOAVProtection {prior_DisableIOAVProtection}",
+                        "Set-MpPreference -DisableRealtimeMonitoring " +
+                        "([bool]::Parse('{prior_DisableRealtimeMonitoring}')) " +
+                        "-DisableIntrusionPreventionSystem " +
+                        "([bool]::Parse('{prior_DisableIntrusionPreventionSystem}')) " +
+                        "-DisableIOAVProtection ([bool]::Parse('{prior_DisableIOAVProtection}'))",
                 },
             },
         },
@@ -378,9 +380,10 @@ public static class Tweaks
             Title = "Harden Defender: PUA blocking, cloud lookups, block-at-first-sight",
             Category = Av,
             Description = "Blocks potentially unwanted apps and enables cloud-assisted detection without auto-submitting files.",
-            Details = "Sets PUAProtection to block, MAPS cloud reporting to basic, 'block at first sight' " +
-                      "on, and sample submission to 'always prompt' so no file leaves the machine without " +
-                      "you saying yes. Skipped when a third-party AV is active.",
+            Details = "Sets PUAProtection to block, MAPS cloud reporting to at least basic (never lowers " +
+                      "a stronger existing setting), 'block at first sight' on, and sample submission to " +
+                      "'always prompt' so no file leaves the machine without you saying yes. Skipped when " +
+                      "a third-party AV is active.",
             Actions = new TweakAction[]
             {
                 new PowerShellAction
@@ -400,13 +403,15 @@ public static class Tweaks
                         "\"prior_MAPSReporting=$($p.MAPSReporting)\"; " +
                         "\"prior_SubmitSamplesConsent=$($p.SubmitSamplesConsent)\"; " +
                         "\"prior_DisableBlockAtFirstSeen=$($p.DisableBlockAtFirstSeen)\"; " +
-                        "Set-MpPreference -PUAProtection 1 -MAPSReporting 1 " +
+                        "Set-MpPreference -PUAProtection 1 " +
+                        "-MAPSReporting ([Math]::Max($p.MAPSReporting, 1)) " +
                         "-SubmitSamplesConsent 0 -DisableBlockAtFirstSeen $false",
                     RevertScriptTemplate =
                         "Set-MpPreference -PUAProtection {prior_PUAProtection} " +
                         "-MAPSReporting {prior_MAPSReporting} " +
                         "-SubmitSamplesConsent {prior_SubmitSamplesConsent} " +
-                        "-DisableBlockAtFirstSeen {prior_DisableBlockAtFirstSeen}",
+                        "-DisableBlockAtFirstSeen " +
+                        "([bool]::Parse('{prior_DisableBlockAtFirstSeen}'))",
                 },
             },
         },

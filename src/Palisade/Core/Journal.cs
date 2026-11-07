@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -53,6 +55,7 @@ public sealed class Journal
 
     public static Journal Load()
     {
+        EnsureSecureDataDir();
         var j = new Journal();
         try
         {
@@ -120,9 +123,54 @@ public sealed class Journal
                .OrderByDescending(e => e.Time)
                .ToList();
 
-    private void Save()
+    private static bool _aclEnsured;
+
+    /// <summary>
+    /// Creates the data dir and restricts it to Administrators + SYSTEM.
+    /// Journal values are substituted into elevated PowerShell during rollback,
+    /// so a standard user must not be able to write (or pre-create) them.
+    /// </summary>
+    public static void EnsureSecureDataDir()
     {
         Directory.CreateDirectory(DataDir);
+        if (_aclEnsured) return;
+        _aclEnsured = true;
+        try
+        {
+            var dir = new DirectoryInfo(DataDir);
+            var acl = dir.GetAccessControl();
+            acl.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+            AddAdminRule(acl, "S-1-5-32-544"); // Administrators
+            AddAdminRule(acl, "S-1-5-18");     // SYSTEM
+            dir.SetAccessControl(acl);
+
+            if (File.Exists(JournalPath))
+            {
+                var file = new FileInfo(JournalPath);
+                var facl = new FileSecurity();
+                facl.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+                AddAdminRule(facl, "S-1-5-32-544");
+                AddAdminRule(facl, "S-1-5-18");
+                file.SetAccessControl(facl);
+            }
+        }
+        catch
+        {
+            // Best effort — a weaker ACL should never break the journal itself.
+        }
+    }
+
+    private static void AddAdminRule(FileSystemSecurity acl, string sid) =>
+        acl.AddAccessRule(new FileSystemAccessRule(
+            new SecurityIdentifier(sid),
+            FileSystemRights.FullControl,
+            InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+            PropagationFlags.None,
+            AccessControlType.Allow));
+
+    private void Save()
+    {
+        EnsureSecureDataDir();
         var tmp = JournalPath + ".tmp";
         File.WriteAllText(tmp, JsonSerializer.Serialize(_entries, JsonOpts));
         File.Move(tmp, JournalPath, overwrite: true);
