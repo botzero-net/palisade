@@ -10,6 +10,10 @@ with one click.
 
 Free, open source (GPL-3.0), no telemetry, no upsell, no "pro" tier.
 
+| Welcome | Protections |
+|---|---|
+| ![Welcome — what Palisade changes and how rollback works](docs/screenshots/welcome.png) | ![Protections checklist — every item expands to show exactly what it changes](docs/screenshots/protections.png) |
+
 ---
 
 ## Download
