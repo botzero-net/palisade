@@ -388,10 +388,12 @@ public sealed class OptionalFeatureAction : TweakAction
         var state = Detect();
         var undo = new ActionUndo { Kind = Kind };
         undo.Data["feature"] = FeatureName;
+        // Applied now means "state already matches DesiredEnabled", so the real
+        // prior state is: enabled when (state == Applied) == DesiredEnabled.
         undo.Data["prior"] = state switch
         {
-            TweakState.Applied => "enabled",
-            TweakState.NotApplied => "disabled",
+            TweakState.Applied or TweakState.NotApplied =>
+                (state == TweakState.Applied) == DesiredEnabled ? "enabled" : "disabled",
             _ => "unknown",
         };
         if (state == TweakState.NotApplicable) return undo;
