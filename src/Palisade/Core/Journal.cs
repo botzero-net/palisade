@@ -55,7 +55,9 @@ public sealed class Journal
 
     public static Journal Load()
     {
-        EnsureSecureDataDir();
+        // Deliberately no EnsureSecureDataDir() here: --self-test and --list must
+        // stay read-only. The ACL is enforced on the first write instead, and
+        // injected prior_* values are rejected by PowerShellAction's integrity check.
         var j = new Journal();
         try
         {

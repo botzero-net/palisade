@@ -50,6 +50,8 @@ public sealed class RegistryTweakAction : TweakAction
     public required string Name { get; init; }
     public required object DesiredValue { get; init; }
     public RegistryValueKind ValueKind { get; init; } = RegistryValueKind.DWord;
+    /// <summary>DWORD values that also count as already-applied (e.g. RunAsPPL: 1 = locked, 2 = protected).</summary>
+    public int[]? AlsoAppliedValues { get; init; }
 
     public override string Kind => "registry";
 
@@ -98,7 +100,11 @@ public sealed class RegistryTweakAction : TweakAction
     private bool ValuesEqual(object current)
     {
         if (ValueKind == RegistryValueKind.DWord)
-            return current is int i && i == Convert.ToInt32(DesiredValue);
+        {
+            if (current is not int i) return false;
+            if (i == Convert.ToInt32(DesiredValue)) return true;
+            return AlsoAppliedValues != null && Array.IndexOf(AlsoAppliedValues, i) >= 0;
+        }
         return string.Equals(current.ToString(), DesiredValue.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
@@ -329,7 +335,7 @@ public sealed class PowerShellAction : TweakAction
     // backticks, pipes, redirection or script blocks).
     private static readonly Regex SafeKey = new(@"^prior_[A-Za-z0-9_]+$", RegexOptions.Compiled);
     private static readonly Regex SafeValue =
-        new(@"^$|^[A-Za-z0-9_.:\\][A-Za-z0-9_.,:+/\\ -]{0,511}$", RegexOptions.Compiled);
+        new(@"^$|^[A-Za-z0-9_.:\\][A-Za-z0-9_.,:+/\\]{0,511}$", RegexOptions.Compiled);
 
     public override void Revert(ActionUndo undo)
     {
@@ -369,8 +375,10 @@ public sealed class OptionalFeatureAction : TweakAction
         return r.StdOut.Trim() switch
         {
             "na" => TweakState.NotApplicable,
-            "true" => TweakState.Applied,
-            "false" => TweakState.NotApplied,
+            // 'true' = currently enabled: applied only when we want it on,
+            // and vice versa — an enabled unwanted feature must NOT read as applied.
+            "true" => DesiredEnabled ? TweakState.Applied : TweakState.NotApplied,
+            "false" => DesiredEnabled ? TweakState.NotApplied : TweakState.Applied,
             _ => TweakState.Unknown,
         };
     }
@@ -380,10 +388,12 @@ public sealed class OptionalFeatureAction : TweakAction
         var state = Detect();
         var undo = new ActionUndo { Kind = Kind };
         undo.Data["feature"] = FeatureName;
+        // Applied now means "state already matches DesiredEnabled", so the real
+        // prior state is: enabled when (state == Applied) == DesiredEnabled.
         undo.Data["prior"] = state switch
         {
-            TweakState.Applied => "enabled",
-            TweakState.NotApplied => "disabled",
+            TweakState.Applied or TweakState.NotApplied =>
+                (state == TweakState.Applied) == DesiredEnabled ? "enabled" : "disabled",
             _ => "unknown",
         };
         if (state == TweakState.NotApplicable) return undo;
