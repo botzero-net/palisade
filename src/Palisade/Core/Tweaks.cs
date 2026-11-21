@@ -295,13 +295,15 @@ public static class Tweaks
             Title = "Disable Widgets and News & Interests",
             Category = Ads,
             Description = "Removes the personalized news/ads feed from the taskbar.",
-            Details = "Sets the 'Allow widgets' policy off and hides the taskbar button. Optional because " +
+            Details = "Hides the taskbar widgets button, then sets the 'Allow widgets' policy off. The " +
+                      "policy key is ACL-locked by Windows on recent builds — when the write is denied, " +
+                      "the button is still hidden and the failure is reported honestly. Optional because " +
                       "some people use the widgets board.",
             Recommended = false,
             Actions = new TweakAction[]
             {
-                HKLM(@"SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0),
                 HKCU(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarDa", 0),
+                HKLM(@"SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0),
             },
         },
 
@@ -562,13 +564,22 @@ public static class Tweaks
             Title = "Run LSASS as a protected process",
             Category = Sys,
             Description = "Makes credential-dumping tools (Mimikatz-class) far less effective.",
-            Details = "Sets RunAsPPL=1 so Local Security Authority runs protected. Optional because it can " +
-                      "conflict with old smart-card/auth plugins. Needs a restart.",
+            Details = "Sets RunAsPPL=2 so Local Security Authority runs protected, without the UEFI " +
+                      "lock (value 1) that makes it much harder to turn back off. A machine already " +
+                      "protected at 1 or 2 is left alone. Optional because it can conflict with old " +
+                      "smart-card/auth plugins. Needs a restart.",
             Recommended = false,
             RequiresReboot = true,
             Actions = new TweakAction[]
             {
-                HKLM(@"SYSTEM\CurrentControlSet\Control\Lsa", "RunAsPPL", 1),
+                new RegistryTweakAction
+                {
+                    Hive = RegistryHive.LocalMachine,
+                    Path = @"SYSTEM\CurrentControlSet\Control\Lsa",
+                    Name = "RunAsPPL",
+                    DesiredValue = 2,
+                    AlsoAppliedValues = new[] { 1 },
+                },
             },
         },
         new Tweak

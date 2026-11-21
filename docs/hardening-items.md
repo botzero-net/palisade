@@ -40,7 +40,7 @@ items are off by default because they can break something someone might use.
 | `sys-rdp` | Disable Remote Desktop | opt | `fDenyTSConnections=1` |
 | `sys-remote-registry` | Disable Remote Registry service | opt | `RemoteRegistry` → disabled & stopped |
 | `sys-memory-integrity` | Memory integrity (HVCI) | opt (reboot) | `HypervisorEnforcedCodeIntegrity\Enabled=1` |
-| `sys-lsa-ppl` | LSASS protected process | opt (reboot) | `Lsa\RunAsPPL=1` |
+| `sys-lsa-ppl` | LSASS protected process | opt (reboot) | `Lsa\RunAsPPL=2` (protected, no UEFI lock; 1 or 2 already set = left alone) |
 | `sys-office-macros` | Block Office macros from the internet | ✓ | `blockcontentexecutionfrominternet=1` for Word/Excel/PowerPoint |
 
 ## Notes
